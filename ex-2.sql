@@ -27,8 +27,7 @@ DROP TABLE IF EXISTS place;
 
 -- STATION TABLE--
 CREATE TABLE stations (
-id text,
-name text, location point
+    id text,　name text, location point
 );
 INSERT INTO stations VALUES ('1','KANNAI','(35.444136, 139.635981)');
 INSERT INTO stations VALUES ('2','SAKURAGICHO','(35.450840, 139.631136)');
@@ -79,3 +78,32 @@ ORDER BY distance ASC;
 SELECT c2.*, gis_distance(c1.location, c2.location) AS distance FROM stations c1, place c2
 WHERE c1.name = 'MINATOMIRAI' AND c2.type = 'sightseeing'
 ORDER BY distance ASC;
+
+
+CREATE FUNCTION div_proc() RETURNS trigger AS $div_proc$
+BEGIN
+    INSERT INTO answer VALUES (NEW.id, div(NEW.operand1, NEW.operand2), mod(NEW.operand1, NEW.operand2));  
+    RETURN NEW;
+END;
+$div_proc$
+LANGUAGE plpgsql;
+
+
+-- https://www.google.co.jp/maps/place/山下公園/@35.4474657,139.6151589,13.51z/data=!4m5!3m4!1s0x60185ce2b1bb57b7:0xe3ba49f16272376c!8m2!3d35.4456543!4d139.6500049?hl=ja
+
+SELECT TRANSLATE(gmapurl,'https://www.google.co.jp/maps/place/','')
+DROP FUNCTION IF EXISTS gmap_convert_trigger();
+CREATE FUNCTION gmap_convert_trigger() RETURNS trigger AS '
+  BEGIN
+    update trigger_test_table set arrival = arrival + 1;
+    delete from trigger_test_table where arrival >= 10;
+    delete from target1 where arrival = 0;
+    insert into target1 (title, arrival, date)
+       select movie.title, arrival, date
+       from movie, trigger_test_table
+       where trigger_test_table.title = movie.title
+       and arrival = 1;
+    return new;
+  END;
+'
+language 'plpgsql';
